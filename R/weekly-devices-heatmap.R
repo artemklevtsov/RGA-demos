@@ -1,11 +1,11 @@
-# File-Name:        weekly-heatmap.R
+# File-Name:        weekly-devices-heatmap.R
 # Date:             2015-09-14
 # Author:           Artem Klevtsov
 # Email:            a.a.klevtsov@gmail.com
-# Purpose:          Create a weekly users activity heatmap with the Google Analytics data
+# Purpose:          Create a weekly users activit by device heatmap with the Google Analytics data
 # Data Used:
 # Packages Used:    RGA, stringi, ggplot2
-# Output File:      weekly-heatmap.png
+# Output File:      weekly-devices-heatmap.png
 # Data Output:
 # Machine:          x86_64 GNU/Linux
 # License:          CC BY 4.0
@@ -14,7 +14,7 @@
 id <- 7783180 # Profile (View) ID
 locale <- "en_US" # Locale
 firstday <- "Sunday" # First day of week
-metric <- "ga:pageviews" # GA metric
+metric <- "ga:sessions" # GA metric
 
 ## Load pakcages
 library(RGA)
@@ -40,7 +40,7 @@ if (firstday == "Sunday") {
 
 ## Get data
 ga_data <- get_ga(profile.id = id, start.date = start.date, end.date = end.date,
-                  metrics = metric, dimensions = "ga:dayOfWeek,ga:hour")
+                  metrics = metric, dimensions = "ga:dayOfWeek,ga:hour,ga:deviceCategory")
 
 ## Prepare data
 ga_data$day.of.week <- factor(ga_data$day.of.week, levels = 0:6, labels = days)
@@ -53,9 +53,9 @@ if (firstday == "Monday") {
 ga_data$hour <- sprintf("%02d:00", ga_data$hour)
 
 ## Draw plot
-p <- ggplot(ga_data, aes(x = day.of.week, y = hour)) +
-    geom_tile(aes_string(fill = gsub("ga:", "", metric)), colour = "white") +
-    scale_fill_gradient(low = "steelblue4", high = "red") +
+p <- ggplot(ga_data, aes(x = hour, group = device.category, fill = device.category)) +
+    geom_area(aes_string(y = gsub("ga:", "", metric))) +
+    facet_wrap(~ day.of.week, ncol = 1L, scales = "free")
     labs(title = "Heatmap daily users activity", x = NULL, y = NULL) +
     theme(axis.ticks = element_blank())
 
@@ -64,7 +64,7 @@ if (interactive()) {
     print(p)
 } else {
     ## Save plot
-    png(filename = "plots/weekly-heatmap.png", res = 300, width = par("din")[1], height = par("din")[2], units = "in")
+    png(filename = "plots/weekly-devices-heatmap.png", res = 300, width = par("din")[1], height = par("din")[2], units = "in")
     print(p)
     dev.off()
 }
